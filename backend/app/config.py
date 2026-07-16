@@ -1,6 +1,8 @@
 """应用配置（环境变量驱动，开发/生产共用一份）。"""
 from functools import lru_cache
+from typing import Any
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,7 +24,24 @@ class Settings(BaseSettings):
     max_upload_mb: int = 50
 
     # CORS（前端开发地址）
-    cors_origins: list[str] = ["http://localhost:3000"]
+    # 声明为 Any 以跳过 pydantic-settings 对 list 字段的强制 JSON 解析，
+    # 再用 before-validator 把「裸 origin / 逗号分隔 / JSON 数组」统一成 list[str]。
+    # Railway/Vercel 控制台填逗号分隔最方便，例如：
+    #   CORS_ORIGINS=https://xxx.vercel.app,http://localhost:3000
+    cors_origins: Any = ["http://localhost:3000"]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v):
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("["):
+                import json
+                return json.loads(v)
+            return [s.strip() for s in v.split(",") if s.strip()]
+        return v
 
     # AI
     openai_api_key: str = ""
