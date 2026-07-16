@@ -1,0 +1,2 @@
+# 占位文件：保证 frontend/public 目录存在（standalone 构建需要 COPY public）
+# 前端静态资源（favicon、og 图等）请放于此目录。
