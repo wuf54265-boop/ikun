@@ -196,6 +196,9 @@ LLM 幻觉不可控、不可复现、不可溯源。本项目采用 **"LLM = 翻
 
 零成本上线，简历里放可点击链接。环境变量细节见各 `*.env.example`。
 
+> 📋 **完整步骤、联调顺序、故障排查清单见 [DEPLOY.md](DEPLOY.md)**。
+> 前置：先把代码 push 到 GitHub（`git remote add origin <仓库> && git push -u origin main`；本仓库已 `git init` 并提交，且本次修复了会导致后端启动崩溃的 `CORS_ORIGINS` 解析问题）。
+
 ### 前端 → Vercel（免费）
 1. 在 Vercel 导入本 GitHub 仓库。
 2. 项目设置：**Root Directory = `frontend`**（框架自动识别 Next.js，详见 `frontend/vercel.json`）。
