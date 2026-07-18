@@ -868,26 +868,6 @@
 
     /* ===================== Contact ===================== */
     function Contact() {
-      const [submitted, setSubmitted] = useState(false);
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        const form = e.target;
-        fetch('https://formsubmit.co/ajax/wuboya0521@qq.com', {
-          method: 'POST',
-          body: new FormData(form),
-        })
-          .then((res) => res.json())
-          .then((res) => {
-            if (!res.success) return;
-            setSubmitted(true);
-            form.reset();
-            setTimeout(() => setSubmitted(false), 2000);
-          })
-          .catch(() => {
-            setSubmitted(true);
-            setTimeout(() => setSubmitted(false), 2000);
-          });
-      };
       return (
         <section id="contact" className="relative w-full bg-transparent px-8 md:px-16 lg:px-20 py-24 md:py-32" style={{ background: 'radial-gradient(circle at 50% 100%, rgba(123,160,75,0.10), transparent 60%)' }}>
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none" />
@@ -904,27 +884,13 @@
             </motion.div>
 
             <FadeUp delay={0.15} className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-6">
-              <a href="mailto:wuboya0521@foxmail.com" className="liquid-glass-strong rounded-full px-6 py-3 text-lg md:text-xl font-heading italic text-white">wuboya0521@foxmail.com</a>
-              <a href="tel:15871864654" className="liquid-glass rounded-full px-6 py-3 text-lg md:text-xl font-heading italic text-white">15871864654</a>
-            </FadeUp>
-
-            <FadeUp delay={0.25} className="mt-12 max-w-md mx-auto">
-              <form action="https://formsubmit.co/wuboya0521@qq.com" method="POST" onSubmit={handleSubmit} className="flex flex-col gap-3 text-left">
-                <input type="hidden" name="_captcha" value="false" />
-                <input type="hidden" name="_subject" value="网站新留言" />
-                <input type="text" name="_honey" tabIndex={-1} autoComplete="off" className="hidden" />
-                <input type="text" name="name" required placeholder="你的称呼" className="liquid-glass rounded-[1rem] px-4 py-3 text-sm text-white font-body outline-none placeholder-white/50" />
-                <input type="email" name="email" required placeholder="邮箱" className="liquid-glass rounded-[1rem] px-4 py-3 text-sm text-white font-body outline-none placeholder-white/50" />
-                <textarea name="message" required placeholder="想聊些什么？" rows="3" className="liquid-glass rounded-[1rem] px-4 py-3 text-sm text-white font-body outline-none placeholder-white/50 resize-none"></textarea>
-                <button type="submit" className="liquid-glass-strong rounded-full px-5 py-3 text-sm font-medium text-white flex items-center justify-center gap-2">
-                  {submitted ? '已发送 ✓' : '发送'}
-                  {!submitted && <ArrowUpRight className="h-5 w-5" />}
-                </button>
-              </form>
+              <a href="mailto:wuboya0521@foxmail.com" className="liquid-glass-strong rounded-full px-6 py-3 text-lg md:text-xl font-heading italic text-white hover:bg-white hover:text-black transition-colors">wuboya0521@foxmail.com</a>
+              <a href="tel:15871864654" className="liquid-glass rounded-full px-6 py-3 text-lg md:text-xl font-heading italic text-white hover:bg-white hover:text-black transition-colors">15871864654</a>
             </FadeUp>
           </div>
         </section>
       );
+    }
     }
 
     /* ===================== Footer ===================== */
