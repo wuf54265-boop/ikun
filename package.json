@@ -1,1 +1,0 @@
-{"name":"boya-portfolio","private":true,"scripts":{"build":"mkdir -p dist && cp index.html hero-bg.png avatar.jpg dist/"}}
