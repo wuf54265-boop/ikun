@@ -872,17 +872,13 @@
       const handleSubmit = (e) => {
         e.preventDefault();
         const form = e.target;
-        const data = {
-          name: form.elements.name.value,
-          email: form.elements.email.value,
-          message: form.elements.message.value,
-        };
-        fetch('https://formspree.io/f/xqkrbqwk', {
+        fetch('https://formsubmit.co/ajax/wuboya0521@qq.com', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(data),
+          body: new FormData(form),
         })
-          .then(() => {
+          .then((res) => res.json())
+          .then((res) => {
+            if (!res.success) return;
             setSubmitted(true);
             form.reset();
             setTimeout(() => setSubmitted(false), 2000);
@@ -913,7 +909,10 @@
             </FadeUp>
 
             <FadeUp delay={0.25} className="mt-12 max-w-md mx-auto">
-              <form action="https://formspree.io/f/xqkrbqwk" method="POST" onSubmit={handleSubmit} className="flex flex-col gap-3 text-left">
+              <form action="https://formsubmit.co/wuboya0521@qq.com" method="POST" onSubmit={handleSubmit} className="flex flex-col gap-3 text-left">
+                <input type="hidden" name="_captcha" value="false" />
+                <input type="hidden" name="_subject" value="网站新留言" />
+                <input type="text" name="_honey" tabIndex={-1} autoComplete="off" className="hidden" />
                 <input type="text" name="name" required placeholder="你的称呼" className="liquid-glass rounded-[1rem] px-4 py-3 text-sm text-white font-body outline-none placeholder-white/50" />
                 <input type="email" name="email" required placeholder="邮箱" className="liquid-glass rounded-[1rem] px-4 py-3 text-sm text-white font-body outline-none placeholder-white/50" />
                 <textarea name="message" required placeholder="想聊些什么？" rows="3" className="liquid-glass rounded-[1rem] px-4 py-3 text-sm text-white font-body outline-none placeholder-white/50 resize-none"></textarea>
