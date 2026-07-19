@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="icon" type="image/jpeg" href="avatar.jpg" />
+  <link rel="icon" type="image/png" href="logo-goat-square.png" />
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -579,7 +579,9 @@
             WebkitBackdropFilter: scrolled ? 'blur(14px)' : 'none',
           }}
         >
-          <a href="#top" className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center font-heading italic text-lg text-white tracking-tight">博雅</a>
+          <a href="#top" className="flex items-center" aria-label="吴博雅 BOYA">
+            <img src="logo-goat-horizontal.png" alt="吴博雅 BOYA" className="h-9 w-auto select-none" />
+          </a>
           <div className="hidden lg:flex flex-1 justify-center">
             <div className="liquid-glass rounded-full px-1.5 py-1.5 flex items-center gap-1">
               {links.map((l, i) => (
