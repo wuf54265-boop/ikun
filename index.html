@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="icon" type="image/png" href="logo-goat-square.png" />
+  <link rel="icon" type="image/png" href="favicon-goat.png" />
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -671,10 +671,13 @@
                 </div>
               </FadeUp>
 
-              <BlurText
-                text="博雅 BOYA"
-                className="text-6xl md:text-7xl lg:text-[5.5rem] font-heading italic text-white leading-[0.8] max-w-2xl tracking-[-2px]"
-              />
+              <FadeUp delay={0.5}>
+                <img
+                  src="logo-goat-horizontal.png"
+                  alt="吴博雅 BOYA"
+                  className="mx-auto h-auto w-[320px] sm:w-[400px] md:w-[500px] lg:w-[560px] select-none drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)]"
+                />
+              </FadeUp>
 
               <FadeUp delay={0.6} className="mt-4">
                 <p className="text-sm md:text-base text-white max-w-2xl font-body font-light leading-tight">
