@@ -777,8 +777,8 @@
 
     /* ===================== Works ===================== */
     const WORKS = [
-      { zh: 'AI 数据分析助手', en: 'AI Data Analysis Assistant — Interpretable Statistical Modeling', tags: ['FastAPI', 'Next.js', 'Pandas', 'OpenAI', 'Docker'], grad: 'linear-gradient(135deg, rgba(100,160,120,0.30), rgba(60,100,140,0.08))', href: 'https://github.com/wuf54265-boop/ai-data-analysis-assistant', flag: '旗舰项目' },
-      { zh: 'AI品牌视觉识别系统', en: 'AI Brand Identity System', tags: ['Brand Design', 'AI', 'Strategy'], grad: 'linear-gradient(135deg, rgba(123,160,75,0.30), rgba(107,143,71,0.06))' },
+      { zh: 'AI 数据分析助手', en: 'AI Data Analysis Assistant — Interpretable Statistical Modeling', tags: ['FastAPI', 'Next.js', 'Pandas', 'OpenAI', 'Docker'], grad: 'linear-gradient(135deg, rgba(100,160,120,0.30), rgba(60,100,140,0.08))', href: 'https://github.com/wuf54265-boop/ai-data-analysis-assistant', demo: 'https://ai-data-analysis-assistant.vercel.app', flag: '旗舰项目' },
+      { zh: 'AI 论文研究助手', en: 'AI Paper Research Assistant — LLM-Powered Academic Writing', tags: ['LLM', 'DeepSeek', 'OpenAI', 'KaTeX', '单文件应用'], grad: 'linear-gradient(135deg, rgba(90,140,180,0.30), rgba(55,90,140,0.07))', href: 'https://github.com/wuf54265-boop/AI-Paper-Research-Assistant', demo: 'https://wuf54265-boop.github.io/AI-Paper-Research-Assistant/', flag: '旗舰项目' },
       { zh: '数据驱动的品牌策略', en: 'Data-Driven Brand Strategy', tags: ['Data Analysis', 'Brand', 'Python'], grad: 'linear-gradient(135deg, rgba(107,143,71,0.28), rgba(90,120,60,0.05))' },
       { zh: 'AI内容工作流系统', en: 'AI Content Workflow System', tags: ['Claude', 'ChatGPT', 'Prompt Design'], grad: 'linear-gradient(135deg, rgba(123,160,75,0.24), rgba(150,130,80,0.06))' },
       { zh: '项目尽调报告可视化', en: 'Due Diligence Report Design', tags: ['Information Design', 'Excel', 'Data Viz'], grad: 'linear-gradient(135deg, rgba(140,120,70,0.24), rgba(123,160,75,0.05))' },
@@ -817,7 +817,9 @@
                         <span key={j} className="liquid-glass rounded-full px-3 py-1 text-[11px] text-white/90 font-body whitespace-nowrap">{t}</span>
                       ))}
                     </div>
-                    {w.href ? (
+                    {w.demo ? (
+                      <a href={w.demo} target="_blank" rel="noopener noreferrer" aria-label={`试用 ${w.zh}`} className="absolute inset-0 z-10" />
+                    ) : w.href ? (
                       <a href={w.href} target="_blank" rel="noopener noreferrer" aria-label={w.zh} className="absolute inset-0 z-10" />
                     ) : (
                       <a href="#" aria-label={w.zh} onClick={(e) => e.preventDefault()} className="absolute inset-0 z-10" />
@@ -829,6 +831,11 @@
                         <ArrowUpRight className="h-5 w-5" />
                       </span>
                     )}
+                    {w.demo && w.href ? (
+                      <a href={w.href} target="_blank" rel="noopener noreferrer" aria-label={`${w.zh} 源码`} className="absolute bottom-4 left-4 z-30 liquid-glass rounded-full px-3 py-1 text-[10px] font-body text-white/90 hover:text-white transition-colors flex items-center gap-1 pointer-events-auto">
+                        <ArrowUpRight className="h-3.5 w-3.5" /> 源码
+                      </a>
+                    ) : null}
                   </div>
                 </motion.div>
               ))}
