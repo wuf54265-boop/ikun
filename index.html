@@ -408,7 +408,6 @@ function initEarth(container) {
   const earth = new THREE.Mesh(earthGeo, earthMat);
   earthGroup.add(earth);
   const loader = new THREE.TextureLoader();
-  loader.crossOrigin = 'anonymous';
   loader.load('vendor/earth-blue-marble.jpg', tex => {
     if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
     earthMat.map = tex;
