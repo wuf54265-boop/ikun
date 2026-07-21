@@ -51,9 +51,9 @@
   </script>
 
   <!-- React / ReactDOM / Framer Motion (CN-mirror CDN, pinned) -->
-  <script defer src="https://unpkg.zhimg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
-  <script defer src="https://unpkg.zhimg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-      <script defer src="https://unpkg.zhimg.com/framer-motion@11.11.17/dist/framer-motion.js"></script>
+  <script defer src="vendor/react.production.min.js"></script>
+  <script defer src="vendor/react-dom.production.min.js"></script>
+      <script defer src="vendor/framer-motion.js"></script>
     <style>
     :root {
       --accent: #7BA04B;
@@ -202,7 +202,7 @@
     </div>
 
   <script type="text/javascript">
-  document.addEventListener('DOMContentLoaded', function() {
+  (function init() { if (typeof React === 'undefined' || typeof (window.Motion || window.FramerMotion) === 'undefined') { setTimeout(init, 50); return; }
 // framer-motion v11 UMD exposes the global as `Motion` (not `FramerMotion`).
 const FM = window.Motion || window.FramerMotion;
 const {
@@ -222,7 +222,7 @@ function loadThree() {
   if (window.__threePromise) return window.__threePromise;
   window.__threePromise = new Promise(function (resolve, reject) {
     var s = document.createElement('script');
-    s.src = 'https://unpkg.zhimg.com/three@0.128.0/build/three.min.js';
+    s.src = 'vendor/three.min.js';
     s.async = true;
     s.onload = function () {
       resolve(window.THREE);
@@ -409,13 +409,13 @@ function initEarth(container) {
   earthGroup.add(earth);
   const loader = new THREE.TextureLoader();
   loader.crossOrigin = 'anonymous';
-  loader.load('https://unpkg.zhimg.com/three-globe/example/img/earth-blue-marble.jpg', tex => {
+  loader.load('vendor/earth-blue-marble.jpg', tex => {
     if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
     earthMat.map = tex;
     earthMat.color.set(0xffffff);
     earthMat.needsUpdate = true;
   }, undefined, () => {
-    loader.load('https://unpkg.zhimg.com/three-globe/example/img/earth-dark.jpg', tex2 => {
+    loader.load('vendor/earth-dark.jpg', tex2 => {
       if (THREE.sRGBEncoding) tex2.encoding = THREE.sRGBEncoding;
       earthMat.map = tex2;
       earthMat.color.set(0xffffff);
@@ -1220,7 +1220,7 @@ function App() {
 }
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(/*#__PURE__*/React.createElement(App, null));
-  });
+})();
   </script>
   <script>
     setTimeout(function () {
