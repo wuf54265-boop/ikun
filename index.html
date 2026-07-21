@@ -25,9 +25,9 @@
   </script>
 
   <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.cn" />
+  <link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin />
+  <link href="https://fonts.googleapis.cn/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="favicon-goat.png" />
 
   <!-- Tailwind CDN -->
@@ -50,15 +50,11 @@
     };
   </script>
 
-  <!-- React / ReactDOM / Babel / Framer Motion (CDN, pinned) -->
-  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/framer-motion@11.11.17/dist/framer-motion.js"></script>
-  <!-- Three.js (CDN, r128 UMD global THREE) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <style>
+  <!-- React / ReactDOM / Framer Motion (CN-mirror CDN, pinned) -->
+  <script defer src="https://unpkg.zhimg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://unpkg.zhimg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+      <script defer src="https://unpkg.zhimg.com/framer-motion@11.11.17/dist/framer-motion.js"></script>
+    <style>
     :root {
       --accent: #7BA04B;
       --accent-leaf: #6B8F47;
@@ -187,756 +183,1050 @@
     @media (prefers-reduced-motion: reduce) {
       .scroll-hint .arrow { animation: none; }
     }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (hover: none) {
+      .skill-pill:hover, .about-card:hover, .work-card:hover {
+        transform: none !important; box-shadow: none !important;
+        background: initial !important; border-color: initial !important;
+      }
+      .scroll-hint .arrow { animation: none; }
+      a, button { min-height: 44px; }
+    }
   </style>
 </head>
 <body class="bg-black">
-  <div id="root"></div>
+  <div id="root">
+      <div id="loader" style="position:fixed;inset:0;display:grid;place-items:center;background:#000;z-index:9999;">
+        <div style="width:32px;height:32px;border:2px solid rgba(123,160,75,0.3);border-top-color:#7BA04B;border-radius:50%;animation:spin .8s linear infinite;"></div>
+      </div>
+    </div>
 
-  <script type="text/babel" data-presets="react">
-    // framer-motion v11 UMD exposes the global as `Motion` (not `FramerMotion`).
-    const FM = window.Motion || window.FramerMotion;
-    const { motion } = FM;
-    const { useState, useEffect, useRef } = React;
-
-    const REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const EASE_T = [0.16, 1, 0.3, 1];
-    const EASE_O = [0.4, 0, 0.2, 1];
-
-    // Suppress benign Framer Motion / list-key dev warnings
-    const _origErr = console.error;
-    console.error = function () {
-      const a = arguments[0];
-      if (typeof a === 'string' && (
-        a.includes('Each child in a list should have a unique') ||
-        a.includes('validateDOMNesting')
-      )) return;
-      _origErr.apply(console, arguments);
+  <script type="text/javascript" defer>
+// framer-motion v11 UMD exposes the global as `Motion` (not `FramerMotion`).
+const FM = window.Motion || window.FramerMotion;
+const {
+  motion
+} = FM;
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE_T = [0.16, 1, 0.3, 1];
+const EASE_O = [0.4, 0, 0.2, 1];
+const IS_MOBILE = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+let __earthCleanup = null;
+function loadThree() {
+  if (window.__threePromise) return window.__threePromise;
+  window.__threePromise = new Promise(function (resolve, reject) {
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.zhimg.com/three@0.128.0/build/three.min.js';
+    s.async = true;
+    s.onload = function () {
+      resolve(window.THREE);
     };
+    s.onerror = function () {
+      reject(new Error('three load failed'));
+    };
+    document.head.appendChild(s);
+  });
+  return window.__threePromise;
+}
 
-    /* ===================== Icons ===================== */
-    function ArrowUpRight({ className = "h-5 w-5" }) {
-      return (
-        <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M7 17L17 7" />
-          <path d="M7 7h10v10" />
-        </svg>
-      );
+// Suppress benign Framer Motion / list-key dev warnings
+const _origErr = console.error;
+console.error = function () {
+  const a = arguments[0];
+  if (typeof a === 'string' && (a.includes('Each child in a list should have a unique') || a.includes('validateDOMNesting'))) return;
+  _origErr.apply(console, arguments);
+};
+
+/* ===================== Icons ===================== */
+function ArrowUpRight({
+  className = "h-5 w-5"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    className: className,
+    width: "24",
+    height: "24",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M7 17L17 7"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M7 7h10v10"
+  }));
+}
+function ArrowDown({
+  className = "h-6 w-6"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    className: className,
+    width: "24",
+    height: "24",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M12 5v14"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M19 12l-7 7-7-7"
+  }));
+}
+function ClockIcon({
+  className = "h-7 w-7"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    className: className,
+    width: "28",
+    height: "28",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "1.6",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "9"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M12 7v5l3 2"
+  }));
+}
+function GlobeIcon({
+  className = "h-7 w-7"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    className: className,
+    width: "28",
+    height: "28",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "1.6",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "9"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M3 12h18"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"
+  }));
+}
+
+/* ===================== FadingImage (rAF fade-in, replaces space video) ===================== */
+function FadingImage({
+  src,
+  className,
+  style
+}) {
+  const imgRef = useRef(null);
+  const rafRef = useRef(null);
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    const FADE_MS = 650;
+    const fadeTo = (target, duration) => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      const start = parseFloat(img.style.opacity || '0') || 0;
+      const t0 = performance.now();
+      const step = now => {
+        const t = Math.min((now - t0) / duration, 1);
+        img.style.opacity = String(start + (target - start) * t);
+        if (t < 1) rafRef.current = requestAnimationFrame(step);
+      };
+      rafRef.current = requestAnimationFrame(step);
+    };
+    const onLoad = () => fadeTo(1, FADE_MS);
+    if (img.complete) onLoad();else img.addEventListener('load', onLoad);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      img.removeEventListener('load', onLoad);
+    };
+  }, [src]);
+  return /*#__PURE__*/React.createElement("img", {
+    ref: imgRef,
+    src: src,
+    alt: "",
+    className: className,
+    style: {
+      opacity: 0,
+      ...(style || {})
     }
-    function ArrowDown({ className = "h-6 w-6" }) {
-      return (
-        <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M12 5v14" />
-          <path d="M19 12l-7 7-7-7" />
-        </svg>
-      );
+  });
+}
+
+/* ===================== EarthBackground (Three.js 3D rotating earth) ===================== */
+/* ===================== EarthBackground (Three.js 3D rotating earth, mobile-degraded) ===================== */
+function initEarth(container) {
+  let W = container.clientWidth,
+    H = container.clientHeight;
+  const isMobile = W < 768;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 1000);
+  camera.position.set(0, 0, isMobile ? 6.5 : 5.5);
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(W, H);
+  if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.setClearColor(0x000000, 0);
+  container.appendChild(renderer.domElement);
+  const radius = isMobile ? 1.3 : 1.7;
+  const seg = isMobile ? 32 : 64;
+  const aspect = W / H;
+  const earthGroup = new THREE.Group();
+  earthGroup.rotation.z = 23.5 * Math.PI / 180; // axial tilt
+  earthGroup.position.x = isMobile ? 0 : aspect > 1.4 ? 1.7 : 1.0;
+  earthGroup.position.y = isMobile ? 0.2 : 0.1;
+  scene.add(earthGroup);
+  const earthGeo = new THREE.SphereGeometry(radius, seg, seg);
+  const earthMat = new THREE.MeshPhongMaterial({
+    color: 0x21304a,
+    specular: 0x223344,
+    shininess: 8
+  });
+  const earth = new THREE.Mesh(earthGeo, earthMat);
+  earthGroup.add(earth);
+  const loader = new THREE.TextureLoader();
+  loader.crossOrigin = 'anonymous';
+  loader.load('https://unpkg.zhimg.com/three-globe/example/img/earth-blue-marble.jpg', tex => {
+    if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
+    earthMat.map = tex;
+    earthMat.color.set(0xffffff);
+    earthMat.needsUpdate = true;
+  }, undefined, () => {
+    loader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg', tex2 => {
+      if (THREE.sRGBEncoding) tex2.encoding = THREE.sRGBEncoding;
+      earthMat.map = tex2;
+      earthMat.color.set(0xffffff);
+      earthMat.needsUpdate = true;
+    });
+  });
+  const atmGeo = new THREE.SphereGeometry(radius * 1.15, seg, seg);
+  const atmMat = new THREE.ShaderMaterial({
+    uniforms: {},
+    vertexShader: 'varying vec3 vNormal; void main(){ vNormal = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'varying vec3 vNormal; void main(){ float intensity = pow(0.62 - dot(vNormal, vec3(0.0,0.0,1.0)), 4.0); gl_FragColor = vec4(0.30,0.60,1.0,1.0) * intensity; }',
+    blending: THREE.AdditiveBlending,
+    side: THREE.BackSide,
+    transparent: true,
+    depthWrite: false
+  });
+  const atmosphere = new THREE.Mesh(atmGeo, atmMat);
+  earthGroup.add(atmosphere);
+  const starCount = isMobile ? 400 : 800;
+  const starPos = new Float32Array(starCount * 3);
+  const starPhase = new Float32Array(starCount);
+  for (let i = 0; i < starCount; i++) {
+    const r = 35 + Math.random() * 30;
+    const th = Math.random() * Math.PI * 2;
+    const ph = Math.acos(2 * Math.random() - 1);
+    starPos[i * 3] = r * Math.sin(ph) * Math.cos(th);
+    starPos[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th);
+    starPos[i * 3 + 2] = r * Math.cos(ph);
+    starPhase[i] = Math.random() * Math.PI * 2;
+  }
+  const starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  starGeo.setAttribute('aPhase', new THREE.BufferAttribute(starPhase, 1));
+  const starMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: {
+        value: 0
+      },
+      uSize: {
+        value: isMobile ? 1.2 : 1.7
+      }
+    },
+    vertexShader: 'attribute float aPhase; uniform float uTime; uniform float uSize; varying float vTw; void main(){ vTw = 0.4 + 0.6 * abs(sin(uTime * 1.5 + aPhase)); vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = uSize * (300.0 / -mv.z); gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'varying float vTw; void main(){ vec2 c = gl_PointCoord - 0.5; float d = length(c); if(d > 0.5) discard; float a = smoothstep(0.5, 0.0, d) * vTw; gl_FragColor = vec4(1.0,1.0,1.0,a); }',
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  const stars = new THREE.Points(starGeo, starMat);
+  scene.add(stars);
+  const orbN = isMobile ? 18 : 30;
+  const orbPos = new Float32Array(orbN * 3);
+  const orbPhase = new Float32Array(orbN);
+  const orbData = [];
+  for (let i = 0; i < orbN; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const rr = radius * (1.35 + Math.random() * 0.5);
+    const yy = (Math.random() - 0.5) * radius * 0.7;
+    const phase = Math.random() * Math.PI * 2;
+    orbData.push({
+      a: a,
+      rr: rr,
+      yy: yy,
+      speed: 0.002 + Math.random() * 0.003,
+      phase: phase
+    });
+    orbPos[i * 3] = Math.cos(a) * rr;
+    orbPos[i * 3 + 1] = yy;
+    orbPos[i * 3 + 2] = Math.sin(a) * rr;
+    orbPhase[i] = phase;
+  }
+  const orbGeo = new THREE.BufferGeometry();
+  orbGeo.setAttribute('position', new THREE.BufferAttribute(orbPos, 3));
+  orbGeo.setAttribute('aPhase', new THREE.BufferAttribute(orbPhase, 1));
+  const orbMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: {
+        value: 0
+      },
+      uSize: {
+        value: isMobile ? 0.08 : 0.12
+      }
+    },
+    vertexShader: 'attribute float aPhase; uniform float uTime; uniform float uSize; varying float vTw; void main(){ vTw = 0.7 + 0.3 * sin(uTime * 2.0 + aPhase); vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = uSize * (300.0 / -mv.z); gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'varying float vTw; void main(){ vec2 c = gl_PointCoord - 0.5; float d = length(c); if(d > 0.5) discard; float alpha = smoothstep(0.5, 0.0, d) * vTw; gl_FragColor = vec4(0.75, 1.0, 0.82, alpha); }',
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  const orbit = new THREE.Points(orbGeo, orbMat);
+  scene.add(orbit);
+  const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+  sun.position.set(5, 3, 5);
+  scene.add(sun);
+  scene.add(new THREE.AmbientLight(0x1a2a4a, 1.1));
+  let raf = null,
+    last = 0;
+  const interval = isMobile ? 1000 / 30 : 0;
+  const spin = REDUCE ? 0 : 0.0022;
+  function animate(t) {
+    raf = requestAnimationFrame(animate);
+    if (interval && t - last < interval) return;
+    last = t;
+    if (!REDUCE) {
+      earth.rotation.y += spin;
+      starMat.uniforms.uTime.value = t * 0.001;
+      orbMat.uniforms.uTime.value = t * 0.001;
+      for (let i = 0; i < orbN; i++) {
+        const o = orbData[i];
+        o.a += o.speed;
+        orbPos[i * 3] = Math.cos(o.a) * o.rr;
+        orbPos[i * 3 + 2] = Math.sin(o.a) * o.rr;
+      }
+      orbGeo.attributes.position.needsUpdate = true;
     }
-    function ClockIcon({ className = "h-7 w-7" }) {
-      return (
-        <svg className={className} width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 7v5l3 2" />
-        </svg>
-      );
+    renderer.render(scene, camera);
+  }
+  if (REDUCE) {
+    renderer.render(scene, camera);
+  } else {
+    raf = requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(() => {
+    if (container) container.style.opacity = '1';
+  });
+  function onResize() {
+    W = container.clientWidth;
+    H = container.clientHeight;
+    camera.aspect = W / H;
+    camera.updateProjectionMatrix();
+    renderer.setSize(W, H);
+  }
+  window.addEventListener('resize', onResize);
+  return function cleanup() {
+    if (raf) cancelAnimationFrame(raf);
+    window.removeEventListener('resize', onResize);
+    scene.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) {
+        const mm = o.material;
+        if (mm.map) mm.map.dispose();
+        mm.dispose();
+      }
+    });
+    renderer.dispose();
+    if (renderer.domElement && renderer.domElement.parentNode) {
+      renderer.domElement.parentNode.removeChild(renderer.domElement);
     }
-    function GlobeIcon({ className = "h-7 w-7" }) {
-      return (
-        <svg className={className} width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M3 12h18" />
-          <path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z" />
-        </svg>
-      );
+  };
+}
+function EarthBackground() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const container = ref.current;
+    if (!container) return;
+    if (IS_MOBILE) {
+      container.style.opacity = '1';
+      return;
     }
+    let cancelled = false;
+    const start = () => {
+      if (!cancelled && typeof THREE !== 'undefined') {
+        __earthCleanup = initEarth(container);
+      }
+    };
+    if (typeof THREE !== 'undefined') start();else loadThree().then(start).catch(function () {});
+    return () => {
+      cancelled = true;
+      if (__earthCleanup) {
+        __earthCleanup();
+        __earthCleanup = null;
+      }
+    };
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: ref,
+    className: "fixed inset-0 z-0 pointer-events-none",
+    style: {
+      opacity: IS_MOBILE ? 1 : 0,
+      transition: IS_MOBILE ? 'none' : 'opacity 1.5s cubic-bezier(0.4,0,0.2,1)',
+      background: IS_MOBILE ? 'radial-gradient(ellipse at 65% 40%, rgba(123,160,75,0.12) 0%, transparent 50%), #000' : 'radial-gradient(circle at 72% 45%, rgba(20,32,64,0.28), transparent 60%)'
+    },
+    "aria-hidden": "true"
+  });
+}
 
-    /* ===================== FadingImage (rAF fade-in, replaces space video) ===================== */
-    function FadingImage({ src, className, style }) {
-      const imgRef = useRef(null);
-      const rafRef = useRef(null);
-      useEffect(() => {
-        const img = imgRef.current;
-        if (!img) return;
-        const FADE_MS = 650;
-        const fadeTo = (target, duration) => {
-          if (rafRef.current) cancelAnimationFrame(rafRef.current);
-          const start = parseFloat(img.style.opacity || '0') || 0;
-          const t0 = performance.now();
-          const step = (now) => {
-            const t = Math.min((now - t0) / duration, 1);
-            img.style.opacity = String(start + (target - start) * t);
-            if (t < 1) rafRef.current = requestAnimationFrame(step);
-          };
-          rafRef.current = requestAnimationFrame(step);
-        };
-        const onLoad = () => fadeTo(1, FADE_MS);
-        if (img.complete) onLoad();
-        else img.addEventListener('load', onLoad);
-        return () => {
-          if (rafRef.current) cancelAnimationFrame(rafRef.current);
-          img.removeEventListener('load', onLoad);
-        };
-      }, [src]);
-      return (
-        <img
-          ref={imgRef}
-          src={src}
-          alt=""
-          className={className}
-          style={{ opacity: 0, ...(style || {}) }}
-        />
-      );
-    }
-
-    /* ===================== EarthBackground (Three.js 3D rotating earth) ===================== */
-    function EarthBackground() {
-      const ref = useRef(null);
-
-      useEffect(() => {
-        const container = ref.current;
-        if (!container || typeof THREE === 'undefined') return;
-        const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        let W = container.clientWidth, H = container.clientHeight;
-        const isMobile = W < 768;
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 1000);
-        camera.position.set(0, 0, isMobile ? 6.5 : 5.5);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        renderer.setSize(W, H);
-        if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.setClearColor(0x000000, 0);
-        container.appendChild(renderer.domElement);
-
-        const radius = isMobile ? 1.3 : 1.7;
-        const seg = isMobile ? 32 : 64;
-        const aspect = W / H;
-
-        const earthGroup = new THREE.Group();
-        earthGroup.rotation.z = 23.5 * Math.PI / 180; // axial tilt
-        earthGroup.position.x = isMobile ? 0 : (aspect > 1.4 ? 1.7 : 1.0);
-        earthGroup.position.y = isMobile ? 0.2 : 0.1;
-        scene.add(earthGroup);
-
-        const earthGeo = new THREE.SphereGeometry(radius, seg, seg);
-        const earthMat = new THREE.MeshPhongMaterial({
-          color: 0x21304a, specular: 0x223344, shininess: 8,
-        });
-        const earth = new THREE.Mesh(earthGeo, earthMat);
-        earthGroup.add(earth);
-
-        const loader = new THREE.TextureLoader();
-        loader.crossOrigin = 'anonymous';
-        loader.load(
-          'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
-          (tex) => {
-            if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
-            earthMat.map = tex; earthMat.color.set(0xffffff); earthMat.needsUpdate = true;
-          },
-          undefined,
-          () => {
-            loader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',
-              (tex2) => { if (THREE.sRGBEncoding) tex2.encoding = THREE.sRGBEncoding; earthMat.map = tex2; earthMat.color.set(0xffffff); earthMat.needsUpdate = true; });
-          }
-        );
-
-        // atmosphere glow (fresnel, back-side shell)
-        const atmGeo = new THREE.SphereGeometry(radius * 1.15, seg, seg);
-        const atmMat = new THREE.ShaderMaterial({
-          uniforms: {},
-          vertexShader: 'varying vec3 vNormal; void main(){ vNormal = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-          fragmentShader: 'varying vec3 vNormal; void main(){ float intensity = pow(0.62 - dot(vNormal, vec3(0.0,0.0,1.0)), 4.0); gl_FragColor = vec4(0.30,0.60,1.0,1.0) * intensity; }',
-          blending: THREE.AdditiveBlending,
-          side: THREE.BackSide,
-          transparent: true,
-          depthWrite: false,
-        });
-        const atmosphere = new THREE.Mesh(atmGeo, atmMat);
-        earthGroup.add(atmosphere);
-
-        // stars (twinkling via shader)
-        const starCount = isMobile ? 400 : 800;
-        const starPos = new Float32Array(starCount * 3);
-        const starPhase = new Float32Array(starCount);
-        for (let i = 0; i < starCount; i++) {
-          const r = 35 + Math.random() * 30;
-          const th = Math.random() * Math.PI * 2;
-          const ph = Math.acos(2 * Math.random() - 1);
-          starPos[i * 3] = r * Math.sin(ph) * Math.cos(th);
-          starPos[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th);
-          starPos[i * 3 + 2] = r * Math.cos(ph);
-          starPhase[i] = Math.random() * Math.PI * 2;
+/* ===================== BlurText (word-by-word blur-in) ===================== */
+function BlurText({
+  text,
+  className = ""
+}) {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          obs.unobserve(entry.target);
         }
-        const starGeo = new THREE.BufferGeometry();
-        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-        starGeo.setAttribute('aPhase', new THREE.BufferAttribute(starPhase, 1));
-        const starMat = new THREE.ShaderMaterial({
-          uniforms: { uTime: { value: 0 }, uSize: { value: isMobile ? 1.2 : 1.7 } },
-          vertexShader: 'attribute float aPhase; uniform float uTime; uniform float uSize; varying float vTw; void main(){ vTw = 0.4 + 0.6 * abs(sin(uTime * 1.5 + aPhase)); vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = uSize * (300.0 / -mv.z); gl_Position = projectionMatrix * mv; }',
-          fragmentShader: 'varying float vTw; void main(){ vec2 c = gl_PointCoord - 0.5; float d = length(c); if(d > 0.5) discard; float a = smoothstep(0.5, 0.0, d) * vTw; gl_FragColor = vec4(1.0,1.0,1.0,a); }',
-          transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-        });
-        const stars = new THREE.Points(starGeo, starMat);
-        scene.add(stars);
-
-        // orbiting micro-particles (AI / data motes) — round glowing points via shader
-        const orbN = isMobile ? 18 : 30;
-        const orbPos = new Float32Array(orbN * 3);
-        const orbPhase = new Float32Array(orbN);
-        const orbData = [];
-        for (let i = 0; i < orbN; i++) {
-          const a = Math.random() * Math.PI * 2;
-          const rr = radius * (1.35 + Math.random() * 0.5);
-          const yy = (Math.random() - 0.5) * radius * 0.7;
-          const phase = Math.random() * Math.PI * 2;
-          orbData.push({ a: a, rr: rr, yy: yy, speed: 0.002 + Math.random() * 0.003, phase: phase });
-          orbPos[i * 3] = Math.cos(a) * rr;
-          orbPos[i * 3 + 1] = yy;
-          orbPos[i * 3 + 2] = Math.sin(a) * rr;
-          orbPhase[i] = phase;
-        }
-        const orbGeo = new THREE.BufferGeometry();
-        orbGeo.setAttribute('position', new THREE.BufferAttribute(orbPos, 3));
-        orbGeo.setAttribute('aPhase', new THREE.BufferAttribute(orbPhase, 1));
-        const orbMat = new THREE.ShaderMaterial({
-          uniforms: { uTime: { value: 0 }, uSize: { value: isMobile ? 0.08 : 0.12 } },
-          vertexShader: 'attribute float aPhase; uniform float uTime; uniform float uSize; varying float vTw; void main(){ vTw = 0.7 + 0.3 * sin(uTime * 2.0 + aPhase); vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = uSize * (300.0 / -mv.z); gl_Position = projectionMatrix * mv; }',
-          fragmentShader: 'varying float vTw; void main(){ vec2 c = gl_PointCoord - 0.5; float d = length(c); if(d > 0.5) discard; float alpha = smoothstep(0.5, 0.0, d) * vTw; gl_FragColor = vec4(0.75, 1.0, 0.82, alpha); }',
-          transparent: true,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending,
-        });
-        const orbit = new THREE.Points(orbGeo, orbMat);
-        scene.add(orbit);
-
-        // lights: sun from upper-left, deep-blue ambient fill for the night side
-        const sun = new THREE.DirectionalLight(0xffffff, 1.6);
-        sun.position.set(5, 3, 5);
-        scene.add(sun);
-        scene.add(new THREE.AmbientLight(0x1a2a4a, 1.1));
-
-        // animation loop
-        let raf = null, last = 0;
-        const interval = isMobile ? 1000 / 30 : 0; // 30fps cap on mobile
-        const spin = REDUCE ? 0 : 0.0022;
-        function animate(t) {
-          raf = requestAnimationFrame(animate);
-          if (interval && t - last < interval) return;
-          last = t;
-          if (!REDUCE) {
-            earth.rotation.y += spin;
-            starMat.uniforms.uTime.value = t * 0.001;
-            orbMat.uniforms.uTime.value = t * 0.001;
-            for (let i = 0; i < orbN; i++) {
-              const o = orbData[i]; o.a += o.speed;
-              orbPos[i * 3] = Math.cos(o.a) * o.rr;
-              orbPos[i * 3 + 2] = Math.sin(o.a) * o.rr;
-            }
-            orbGeo.attributes.position.needsUpdate = true;
-          }
-          renderer.render(scene, camera);
-        }
-        if (REDUCE) { renderer.render(scene, camera); }
-        else { raf = requestAnimationFrame(animate); }
-
-        // fade-in (synced with hero title reveal)
-        requestAnimationFrame(() => { if (container) container.style.opacity = '1'; });
-
-        function onResize() {
-          W = container.clientWidth; H = container.clientHeight;
-          camera.aspect = W / H; camera.updateProjectionMatrix();
-          renderer.setSize(W, H);
-        }
-        window.addEventListener('resize', onResize);
-
-        return () => {
-          if (raf) cancelAnimationFrame(raf);
-          window.removeEventListener('resize', onResize);
-          scene.traverse((o) => {
-            if (o.geometry) o.geometry.dispose();
-            if (o.material) {
-              const m = o.material;
-              if (m.map) m.map.dispose();
-              m.dispose();
-            }
-          });
-          renderer.dispose();
-          if (renderer.domElement && renderer.domElement.parentNode) {
-            renderer.domElement.parentNode.removeChild(renderer.domElement);
-          }
-        };
-      }, []);
-
-      return (
-        <div
-          ref={ref}
-          className="fixed inset-0 z-0 pointer-events-none"
-          style={{ opacity: 0, transition: 'opacity 1.5s cubic-bezier(0.4,0,0.2,1)', background: 'radial-gradient(circle at 72% 45%, rgba(20,32,64,0.28), transparent 60%)' }}
-          aria-hidden="true"
-        />
-      );
+      });
+    }, {
+      threshold: 0.1
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  const words = text.split(' ');
+  const initial = REDUCE || IS_MOBILE ? false : {
+    filter: 'blur(10px)',
+    opacity: 0,
+    y: 50
+  };
+  const animate = inView || REDUCE ? {
+    filter: ['blur(10px)', 'blur(5px)', 'blur(0px)'],
+    opacity: [0, 0.5, 1],
+    y: [50, -5, 0]
+  } : {};
+  return /*#__PURE__*/React.createElement("p", {
+    ref: ref,
+    className: className,
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      rowGap: '0.1em'
     }
-
-    /* ===================== BlurText (word-by-word blur-in) ===================== */
-    function BlurText({ text, className = "" }) {
-      const ref = useRef(null);
-      const [inView, setInView] = useState(false);
-
-      useEffect(() => {
-        const el = ref.current;
-        if (!el) return;
-        const obs = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setInView(true);
-              obs.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.1 });
-        obs.observe(el);
-        return () => obs.disconnect();
-      }, []);
-
-      const words = text.split(' ');
-      const initial = REDUCE ? false : { filter: 'blur(10px)', opacity: 0, y: 50 };
-      const animate = inView || REDUCE
-        ? { filter: ['blur(10px)', 'blur(5px)', 'blur(0px)'], opacity: [0, 0.5, 1], y: [50, -5, 0] }
-        : {};
-
-      return (
-        <p
-          ref={ref}
-          className={className}
-          style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', rowGap: '0.1em' }}
-        >
-          {words.map((word, i) => (
-            <motion.span
-              key={i}
-              initial={initial}
-              animate={animate}
-              transition={{ duration: 0.7, times: [0, 0.5, 1], ease: 'easeOut', delay: (i * 100) / 1000 }}
-              style={{ display: 'inline-block', marginRight: '0.28em' }}
-            >
-              {word}
-            </motion.span>
-          ))}
-        </p>
-      );
+  }, words.map((word, i) => /*#__PURE__*/React.createElement(motion.span, {
+    key: i,
+    initial: initial,
+    animate: animate,
+    transition: {
+      duration: 0.7,
+      times: [0, 0.5, 1],
+      ease: 'easeOut',
+      delay: i * 100 / 1000
+    },
+    style: {
+      display: 'inline-block',
+      marginRight: '0.28em'
     }
+  }, word)));
+}
 
-    /* ===================== Reusable FadeUp ===================== */
-    const fadeUpInitial = { filter: 'blur(10px)', opacity: 0, y: 20 };
-    const fadeUpTarget = { filter: 'blur(0px)', opacity: 1, y: 0 };
-    function FadeUp({ children, delay = 0, className = "", ...rest }) {
-      return (
-        <motion.div
-          className={className}
-          initial={REDUCE ? false : fadeUpInitial}
-          animate={fadeUpTarget}
-          transition={{ duration: 0.8, ease: EASE_T, delay }}
-          {...rest}
-        >
-          {children}
-        </motion.div>
-      );
+/* ===================== Reusable FadeUp ===================== */
+const fadeUpInitial = {
+  filter: 'blur(10px)',
+  opacity: 0,
+  y: 20
+};
+const fadeUpTarget = {
+  filter: 'blur(0px)',
+  opacity: 1,
+  y: 0
+};
+const fadeUpInitialMobile = {
+  opacity: 0,
+  y: 20
+};
+function FadeUp({
+  children,
+  delay = 0,
+  className = "",
+  ...rest
+}) {
+  return /*#__PURE__*/React.createElement(motion.div, {
+    className: className,
+    initial: REDUCE ? false : IS_MOBILE ? fadeUpInitialMobile : fadeUpInitial,
+    animate: fadeUpTarget,
+    transition: {
+      duration: 0.8,
+      ease: EASE_T,
+      delay
+    },
+    ...rest
+  }, children);
+}
+
+/* ===================== Navbar (scroll-glass > 80px, mobile hamburger) ===================== */
+function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 80);
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, {
+      passive: true
+    });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  // lock body scroll while the mobile overlay is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
+  const links = [{
+    label: '作品',
+    href: '#works'
+  }, {
+    label: '技能',
+    href: '#skills'
+  }, {
+    label: '关于',
+    href: '#about'
+  }, {
+    label: '联系',
+    href: '#contact'
+  }];
+  return /*#__PURE__*/React.createElement("nav", {
+    className: "nav-shell fixed top-4 left-0 right-0 z-50 px-6 md:px-8 lg:px-16 flex items-center justify-between rounded-full",
+    style: {
+      background: scrolled ? 'rgba(0,0,0,0.55)' : 'transparent',
+      backdropFilter: scrolled ? 'blur(14px)' : 'none',
+      WebkitBackdropFilter: scrolled ? 'blur(14px)' : 'none'
     }
-
-    /* ===================== Navbar (scroll-glass > 80px, mobile hamburger) ===================== */
-    function Navbar() {
-      const [scrolled, setScrolled] = useState(false);
-      const [menuOpen, setMenuOpen] = useState(false);
-      useEffect(() => {
-        let ticking = false;
-        const onScroll = () => {
-          if (ticking) return;
-          ticking = true;
-          requestAnimationFrame(() => {
-            setScrolled(window.scrollY > 80);
-            ticking = false;
-          });
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        onScroll();
-        return () => window.removeEventListener('scroll', onScroll);
-      }, []);
-      // lock body scroll while the mobile overlay is open
-      useEffect(() => {
-        document.body.style.overflow = menuOpen ? 'hidden' : '';
-        return () => { document.body.style.overflow = ''; };
-      }, [menuOpen]);
-      const links = [
-        { label: '作品', href: '#works' },
-        { label: '技能', href: '#skills' },
-        { label: '关于', href: '#about' },
-        { label: '联系', href: '#contact' },
-      ];
-      return (
-        <nav
-          className="nav-shell fixed top-4 left-0 right-0 z-50 px-6 md:px-8 lg:px-16 flex items-center justify-between rounded-full"
-          style={{
-            background: scrolled ? 'rgba(0,0,0,0.55)' : 'transparent',
-            backdropFilter: scrolled ? 'blur(14px)' : 'none',
-            WebkitBackdropFilter: scrolled ? 'blur(14px)' : 'none',
-          }}
-        >
-          <a href="#top" className="flex items-center" aria-label="吴博雅 BOYA">
-            <img src="logo-goat-horizontal.png" alt="吴博雅 BOYA" className="h-9 w-auto select-none" />
-          </a>
-          <div className="hidden lg:flex flex-1 justify-center">
-            <div className="liquid-glass rounded-full px-1.5 py-1.5 flex items-center gap-1">
-              {links.map((l, i) => (
-                <a key={i} href={l.href} className="px-3 py-2 text-sm font-medium text-white/90 font-body hover:text-white transition-colors">{l.label}</a>
-              ))}
-              <a href="#contact" className="bg-white text-black rounded-full px-3 py-2 text-sm font-medium flex items-center gap-1 whitespace-nowrap">
-                联系我
-                <ArrowUpRight className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-
-          {/* hamburger (mobile) -> X with rotation */}
-          <button
-            type="button"
-            aria-label="菜单"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((v) => !v)}
-            className="lg:hidden relative z-[70] w-10 h-10 flex items-center justify-center text-white"
-          >
-            <span className={"absolute left-1 right-1 h-0.5 bg-white rounded-full transition-transform duration-300 " + (menuOpen ? "top-1/2 -translate-y-1/2 rotate-45" : "top-2")} />
-            <span className={"absolute left-1 right-1 h-0.5 bg-white rounded-full transition-opacity duration-300 " + (menuOpen ? "opacity-0" : "top-1/2 -translate-y-1/2")} />
-            <span className={"absolute left-1 right-1 h-0.5 bg-white rounded-full transition-transform duration-300 " + (menuOpen ? "bottom-1/2 translate-y-1/2 -rotate-45" : "bottom-2")} />
-          </button>
-
-          {/* fullscreen overlay menu (mobile) */}
-          {menuOpen && (
-            <motion.div
-              className="lg:hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center gap-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.35, ease: EASE_O }}
-            >
-              {links.map((l, i) => (
-                <motion.a
-                  key={i}
-                  href={l.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="font-heading italic text-white text-4xl"
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: EASE_O, delay: 0.08 * i }}
-                >
-                  {l.label}
-                </motion.a>
-              ))}
-            </motion.div>
-          )}
-        </nav>
-      );
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "#top",
+    className: "flex items-center",
+    "aria-label": "吴博雅 BOYA"
+  }, /*#__PURE__*/React.createElement("img", {
+    src: "logo-goat-horizontal.png",
+    alt: "吴博雅 BOYA",
+    className: "h-9 w-auto select-none"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "hidden lg:flex flex-1 justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "liquid-glass rounded-full px-1.5 py-1.5 flex items-center gap-1"
+  }, links.map((l, i) => /*#__PURE__*/React.createElement("a", {
+    key: i,
+    href: l.href,
+    className: "px-3 py-2 text-sm font-medium text-white/90 font-body hover:text-white transition-colors"
+  }, l.label)), /*#__PURE__*/React.createElement("a", {
+    href: "#contact",
+    className: "bg-white text-black rounded-full px-3 py-2 text-sm font-medium flex items-center gap-1 whitespace-nowrap"
+  }, "联系我", /*#__PURE__*/React.createElement(ArrowUpRight, {
+    className: "h-4 w-4"
+  })))), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    "aria-label": "菜单",
+    "aria-expanded": menuOpen,
+    onClick: () => setMenuOpen(v => !v),
+    className: "lg:hidden relative z-[70] w-11 h-11 flex items-center justify-center text-white"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute left-1 right-1 h-0.5 bg-white rounded-full transition-transform duration-300 " + (menuOpen ? "top-1/2 -translate-y-1/2 rotate-45" : "top-2")
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "absolute left-1 right-1 h-0.5 bg-white rounded-full transition-opacity duration-300 " + (menuOpen ? "opacity-0" : "top-1/2 -translate-y-1/2")
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "absolute left-1 right-1 h-0.5 bg-white rounded-full transition-transform duration-300 " + (menuOpen ? "bottom-1/2 translate-y-1/2 -rotate-45" : "bottom-2")
+  })), menuOpen && /*#__PURE__*/React.createElement(motion.div, {
+    className: "lg:hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center gap-8",
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    transition: {
+      duration: 0.35,
+      ease: EASE_O
     }
-
-    /* ===================== Hero ===================== */
-    function Hero() {
-      const [hintHidden, setHintHidden] = useState(false);
-
-      useEffect(() => {
-        if (REDUCE) return;
-        let ticking = false;
-        const onScroll = () => {
-          if (ticking) return;
-          ticking = true;
-          requestAnimationFrame(() => {
-            setHintHidden(window.scrollY > window.innerHeight);
-            ticking = false;
-          });
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        onScroll();
-        return () => window.removeEventListener('scroll', onScroll);
-      }, []);
-
-      return (
-        <section id="top" className="relative min-h-screen w-full overflow-hidden bg-transparent">
-          <EarthBackground />
-          {/* subtle vignette to ground the hero and protect text contrast */}
-          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/20 via-transparent to-black/85 pointer-events-none" />
-          {/* left dark wash so hero text stays legible over the lit earth */}
-          <div className="absolute inset-0 z-[1] bg-gradient-to-r from-black/70 via-black/20 to-transparent pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col min-h-screen">
-            <div className="flex-1 flex flex-col items-center justify-center pt-28 px-4 text-center">
-              <FadeUp delay={0.4} className="mb-6">
-                <div className="liquid-glass rounded-full flex items-center">
-                  <span className="bg-white text-black rounded-full px-3 py-1 text-xs font-semibold">AI Designer</span>
-                  <span className="text-sm text-white/90 pr-3 pl-2">统计学硕士在读 · AI 品牌设计师</span>
-                </div>
-              </FadeUp>
-
-              <FadeUp delay={0.5}>
-                <img
-                  src="logo-goat-horizontal.png"
-                  alt="吴博雅 BOYA"
-                  className="mx-auto h-auto w-[320px] sm:w-[400px] md:w-[500px] lg:w-[560px] select-none drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)]"
-                />
-              </FadeUp>
-
-              <FadeUp delay={0.6} className="mt-4">
-                <p className="text-sm md:text-base text-white max-w-2xl font-body font-light leading-tight">
-                  以数据思维构建品牌，用 AI 工具放大创意
-                </p>
-              </FadeUp>
-
-              <FadeUp delay={0.8} className="mt-6">
-                <div className="flex items-center gap-6">
-                  <a href="#works" className="liquid-glass-strong rounded-full px-5 py-2.5 text-sm font-medium text-white flex items-center gap-2">
-                    查看作品
-                    <ArrowUpRight className="h-5 w-5" />
-                  </a>
-                  <a className="text-white/90 flex items-center gap-2 text-sm font-medium" href="#about">
-                    <span>了解更多</span>
-                    <ArrowDown className="h-4 w-4" />
-                  </a>
-                </div>
-              </FadeUp>
-
-              <FadeUp delay={1.0} className="mt-8">
-                <div className="flex items-stretch gap-4 flex-wrap justify-center">
-                  <div className="liquid-glass rounded-[1.25rem] p-5 w-[220px] flex flex-col">
-                    <ClockIcon className="h-7 w-7 text-white" />
-                    <div className="text-4xl tracking-[-1px] leading-none font-heading italic text-white mt-4">5+</div>
-                    <div className="text-sm text-white font-body font-light mt-2">精选作品</div>
-                    <div className="text-xs text-white/70 font-body font-light mt-1">品牌设计 x AI 驱动的创意输出</div>
-                  </div>
-                  <div className="liquid-glass rounded-[1.25rem] p-5 w-[220px] flex flex-col">
-                    <GlobeIcon className="h-7 w-7 text-white" />
-                    <div className="text-4xl tracking-[-1px] leading-none font-heading italic text-white mt-4">2年+</div>
-                    <div className="text-sm text-white font-body font-light mt-2">统计学训练</div>
-                    <div className="text-xs text-white/70 font-body font-light mt-1">数据洞察赋能品牌策略</div>
-                  </div>
-                </div>
-              </FadeUp>
-            </div>
-
-            {!REDUCE && (
-              <div className={"scroll-hint" + (hintHidden ? " is-hidden" : "")}>
-                <span className="text-[11px] font-body tracking-wide">向下滚动</span>
-                <ArrowDown className="arrow h-6 w-6" />
-              </div>
-            )}
-          </div>
-        </section>
-      );
+  }, links.map((l, i) => /*#__PURE__*/React.createElement(motion.a, {
+    key: i,
+    href: l.href,
+    onClick: () => setMenuOpen(false),
+    className: "font-heading italic text-white text-4xl",
+    initial: {
+      opacity: 0,
+      y: 14
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    transition: {
+      duration: 0.35,
+      ease: EASE_O,
+      delay: 0.08 * i
     }
+  }, l.label))));
+}
 
-    /* ===================== About ===================== */
-    const ABOUT_CARDS = [
-      { icon: '📍', title: '湖北天门', sub: '所在地' },
-      { icon: '🎓', title: '河北经贸大学', sub: '统计学硕士（在读）' },
-      { icon: '📧', title: 'wuboya0521@foxmail.com', sub: '邮箱' },
-    ];
-    function About() {
-      return (
-        <section id="about" className="relative w-full bg-transparent px-8 md:px-16 lg:px-20 py-24 md:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none" />
-          <div className="max-w-3xl mx-auto text-center relative z-10">
-            <motion.div
-              initial={REDUCE ? false : fadeUpInitial}
-              whileInView={fadeUpTarget}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.8, ease: EASE_T }}
-            >
-              <p className="text-sm font-body text-white/70 mb-4">// About</p>
-              <h2 className="font-heading italic text-white text-5xl md:text-6xl lg:text-6xl leading-[0.9] tracking-[-2px]">关于我</h2>
-            </motion.div>
+/* ===================== Hero ===================== */
+function Hero() {
+  const [hintHidden, setHintHidden] = useState(false);
+  useEffect(() => {
+    if (REDUCE) return;
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setHintHidden(window.scrollY > window.innerHeight);
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, {
+      passive: true
+    });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return /*#__PURE__*/React.createElement("section", {
+    id: "top",
+    className: "relative min-h-screen w-full overflow-hidden bg-transparent"
+  }, /*#__PURE__*/React.createElement(EarthBackground, null), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 z-[1] bg-gradient-to-b from-black/20 via-transparent to-black/85 pointer-events-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 z-[1] bg-gradient-to-r from-black/70 via-black/20 to-transparent pointer-events-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "relative z-10 flex flex-col min-h-screen"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex flex-col items-center justify-center pt-28 px-4 text-center"
+  }, /*#__PURE__*/React.createElement(FadeUp, {
+    delay: 0.4,
+    className: "mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "liquid-glass rounded-full flex items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "bg-white text-black rounded-full px-3 py-1 text-xs font-semibold"
+  }, "AI Designer"), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm text-white/90 pr-3 pl-2"
+  }, "统计学硕士在读 · AI 品牌设计师"))), /*#__PURE__*/React.createElement(FadeUp, {
+    delay: 0.5
+  }, /*#__PURE__*/React.createElement("img", {
+    src: "logo-goat-horizontal.png",
+    alt: "吴博雅 BOYA",
+    className: "mx-auto h-auto w-[320px] sm:w-[400px] md:w-[500px] lg:w-[560px] select-none drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)]"
+  })), /*#__PURE__*/React.createElement(FadeUp, {
+    delay: 0.6,
+    className: "mt-4"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm md:text-base text-white max-w-2xl font-body font-light leading-tight"
+  }, "以数据思维构建品牌，用 AI 工具放大创意")), /*#__PURE__*/React.createElement(FadeUp, {
+    delay: 0.8,
+    className: "mt-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-6"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "#works",
+    className: "liquid-glass-strong rounded-full px-5 py-2.5 text-sm font-medium text-white flex items-center gap-2"
+  }, "查看作品", /*#__PURE__*/React.createElement(ArrowUpRight, {
+    className: "h-5 w-5"
+  })), /*#__PURE__*/React.createElement("a", {
+    className: "text-white/90 flex items-center gap-2 text-sm font-medium",
+    href: "#about"
+  }, /*#__PURE__*/React.createElement("span", null, "了解更多"), /*#__PURE__*/React.createElement(ArrowDown, {
+    className: "h-4 w-4"
+  })))), /*#__PURE__*/React.createElement(FadeUp, {
+    delay: 1.0,
+    className: "mt-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-stretch gap-4 flex-wrap justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "liquid-glass rounded-[1.25rem] p-5 w-[220px] flex flex-col"
+  }, /*#__PURE__*/React.createElement(ClockIcon, {
+    className: "h-7 w-7 text-white"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl tracking-[-1px] leading-none font-heading italic text-white mt-4"
+  }, "5+"), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-white font-body font-light mt-2"
+  }, "精选作品"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-white/70 font-body font-light mt-1"
+  }, "品牌设计 x AI 驱动的创意输出")), /*#__PURE__*/React.createElement("div", {
+    className: "liquid-glass rounded-[1.25rem] p-5 w-[220px] flex flex-col"
+  }, /*#__PURE__*/React.createElement(GlobeIcon, {
+    className: "h-7 w-7 text-white"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl tracking-[-1px] leading-none font-heading italic text-white mt-4"
+  }, "2年+"), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-white font-body font-light mt-2"
+  }, "统计学训练"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-white/70 font-body font-light mt-1"
+  }, "数据洞察赋能品牌策略"))))), !REDUCE && /*#__PURE__*/React.createElement("div", {
+    className: "scroll-hint" + (hintHidden ? " is-hidden" : "")
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-[11px] font-body tracking-wide"
+  }, "向下滚动"), /*#__PURE__*/React.createElement(ArrowDown, {
+    className: "arrow h-6 w-6"
+  }))));
+}
 
-            <motion.div
-              initial={REDUCE ? false : fadeUpInitial}
-              whileInView={fadeUpTarget}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.8, ease: EASE_T, delay: 0.1 }}
-              className="mt-8 text-left"
-            >
-              <p className="text-base md:text-lg text-white/90 font-body font-light leading-relaxed">
-                统计学硕士在读，以 AI 为驱动的设计师。擅长将数据洞察转化为品牌视觉语言，运用 Claude、ChatGPT 等 AI 工具系统化地进行设计调研、内容策略与创意输出。
-              </p>
-              <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {ABOUT_CARDS.map((c, i) => (
-                  <motion.div
-                    key={i}
-                    className="about-card rounded-[1.25rem] p-5 flex flex-col"
-                    initial={REDUCE ? false : fadeUpInitial}
-                    whileInView={fadeUpTarget}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ duration: 0.7, ease: EASE_T, delay: i * 0.1 }}
-                  >
-                    <span className="text-2xl">{c.icon}</span>
-                    <div className="text-white font-body font-medium mt-3 leading-snug break-all">{c.title}</div>
-                    <div className="text-xs text-white/60 font-body font-light mt-1">{c.sub}</div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </section>
-      );
+/* ===================== About ===================== */
+const ABOUT_CARDS = [{
+  icon: '📍',
+  title: '湖北天门',
+  sub: '所在地'
+}, {
+  icon: '🎓',
+  title: '河北经贸大学',
+  sub: '统计学硕士（在读）'
+}, {
+  icon: '📧',
+  title: 'wuboya0521@foxmail.com',
+  sub: '邮箱'
+}];
+function About() {
+  return /*#__PURE__*/React.createElement("section", {
+    id: "about",
+    className: "relative w-full bg-transparent px-8 md:px-16 lg:px-20 py-24 md:py-32"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "max-w-3xl mx-auto text-center relative z-10"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: REDUCE ? false : IS_MOBILE ? fadeUpInitialMobile : fadeUpInitial,
+    whileInView: fadeUpTarget,
+    viewport: {
+      once: true,
+      amount: 0.3
+    },
+    transition: {
+      duration: 0.8,
+      ease: EASE_T
     }
-
-    /* ===================== Works ===================== */
-    const WORKS = [
-      { zh: 'AI 数据分析助手', en: 'AI Data Analysis Assistant — Interpretable Statistical Modeling', tags: ['FastAPI', 'Next.js', 'Pandas', 'OpenAI', 'Docker'], grad: 'linear-gradient(135deg, rgba(100,160,120,0.30), rgba(60,100,140,0.08))', href: 'https://github.com/wuf54265-boop/ai-data-analysis-assistant', demo: 'https://ai-data-analysis-assistant-chi.vercel.app', flag: '旗舰项目' },
-      { zh: 'AI 论文研究助手', en: 'AI Paper Research Assistant — LLM-Powered Academic Writing', tags: ['LLM', 'DeepSeek', 'OpenAI', 'KaTeX', '单文件应用'], grad: 'linear-gradient(135deg, rgba(90,140,180,0.30), rgba(55,90,140,0.07))', href: 'https://github.com/wuf54265-boop/AI-Paper-Research-Assistant', demo: 'https://wuf54265-boop.github.io/AI-Paper-Research-Assistant/', flag: '旗舰项目' },
-      { zh: '小厨房 · 微信小程序', en: 'Little Kitchen — Recipe WeChat Mini Program, 100 dishes & mock ordering', tags: ['微信小程序', 'JavaScript', '本地 Storage', 'Emoji 设计'], grad: 'linear-gradient(135deg, rgba(220,140,70,0.30), rgba(150,90,50,0.06))', href: 'https://github.com/wuf54265-boop/ikun-little-kitchen', flag: '微信小程序' },
-      { zh: 'AI内容工作流系统', en: 'AI Content Workflow System', tags: ['Claude', 'ChatGPT', 'Prompt Design'], grad: 'linear-gradient(135deg, rgba(123,160,75,0.24), rgba(150,130,80,0.06))' },
-      { zh: '项目尽调报告可视化', en: 'Due Diligence Report Design', tags: ['Information Design', 'Excel', 'Data Viz'], grad: 'linear-gradient(135deg, rgba(140,120,70,0.24), rgba(123,160,75,0.05))' },
-      { zh: '财务数据仪表板', en: 'Financial Data Dashboard', tags: ['Dashboard', 'UX', 'Data'], grad: 'linear-gradient(135deg, rgba(110,140,80,0.26), rgba(120,110,70,0.06))' },
-    ];
-    function Works() {
-      return (
-        <section id="works" className="relative w-full bg-black px-8 md:px-16 lg:px-20 py-24 md:py-32" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(123,160,75,0.08), transparent 60%)' }}>
-          <div className="max-w-6xl mx-auto">
-            <motion.div
-              className="text-center mb-14"
-              initial={REDUCE ? false : fadeUpInitial}
-              whileInView={fadeUpTarget}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.8, ease: EASE_T }}
-            >
-              <p className="text-sm font-body text-white/70 mb-4">// Works</p>
-              <h2 className="font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-2px]">精选作品</h2>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {WORKS.map((w, i) => (
-                <motion.div
-                  key={i}
-                  initial={REDUCE ? false : fadeUpInitial}
-                  whileInView={fadeUpTarget}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.7, ease: EASE_T, delay: (i % 3) * 0.1 }}
-                >
-                  <div className={`work-card liquid-glass rounded-[1.25rem] p-6 ${w.demo && w.href ? 'pb-16' : ''} min-h-[320px] flex flex-col cursor-pointer relative group`} style={{ background: w.grad }}>
-                    <h3 className="font-heading italic text-white text-2xl md:text-3xl tracking-[-1px] leading-tight">{w.zh}</h3>
-                    <p className="text-sm text-white/70 font-body font-light mt-2">{w.en}</p>
-                    <div className="flex-1" />
-                    <div className="mt-6 flex flex-wrap gap-1.5">
-                      {w.tags.map((t, j) => (
-                        <span key={j} className="liquid-glass rounded-full px-3 py-1 text-[11px] text-white/90 font-body whitespace-nowrap">{t}</span>
-                      ))}
-                    </div>
-                    {w.demo ? (
-                      <a href={w.demo} target="_blank" rel="noopener noreferrer" aria-label={`试用 ${w.zh}`} className="absolute inset-0 z-10" />
-                    ) : w.href ? (
-                      <a href={w.href} target="_blank" rel="noopener noreferrer" aria-label={w.zh} className="absolute inset-0 z-10" />
-                    ) : (
-                      <a href="#" aria-label={w.zh} onClick={(e) => e.preventDefault()} className="absolute inset-0 z-10" />
-                    )}
-                    {w.flag ? (
-                      <span className="absolute top-4 right-4 z-20 liquid-glass rounded-full px-2.5 py-1 text-[10px] font-body text-white whitespace-nowrap">{w.flag}</span>
-                    ) : (
-                      <span className="absolute top-4 right-4 z-20 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                        <ArrowUpRight className="h-5 w-5" />
-                      </span>
-                    )}
-                    {w.demo && w.href ? (
-                      <a href={w.href} target="_blank" rel="noopener noreferrer" aria-label={`${w.zh} 源码`} className="absolute bottom-4 left-4 z-30 liquid-glass rounded-full px-3 py-1 text-[10px] font-body text-white/90 hover:text-white transition-colors flex items-center gap-1 pointer-events-auto">
-                        <ArrowUpRight className="h-3.5 w-3.5" /> 源码
-                      </a>
-                    ) : null}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      );
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-body text-white/70 mb-4"
+  }, "// About"), /*#__PURE__*/React.createElement("h2", {
+    className: "font-heading italic text-white text-5xl md:text-6xl lg:text-6xl leading-[0.9] tracking-[-2px]"
+  }, "关于我")), /*#__PURE__*/React.createElement(motion.div, {
+    initial: REDUCE ? false : IS_MOBILE ? fadeUpInitialMobile : fadeUpInitial,
+    whileInView: fadeUpTarget,
+    viewport: {
+      once: true,
+      amount: 0.3
+    },
+    transition: {
+      duration: 0.8,
+      ease: EASE_T,
+      delay: 0.1
+    },
+    className: "mt-8 text-left"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-base md:text-lg text-white/90 font-body font-light leading-relaxed"
+  }, "统计学硕士在读，以 AI 为驱动的设计师。擅长将数据洞察转化为品牌视觉语言，运用 Claude、ChatGPT 等 AI 工具系统化地进行设计调研、内容策略与创意输出。"), /*#__PURE__*/React.createElement("div", {
+    className: "mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4"
+  }, ABOUT_CARDS.map((c, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: i,
+    className: "about-card rounded-[1.25rem] p-5 flex flex-col",
+    initial: REDUCE ? false : IS_MOBILE ? fadeUpInitialMobile : fadeUpInitial,
+    whileInView: fadeUpTarget,
+    viewport: {
+      once: true,
+      amount: 0.3
+    },
+    transition: {
+      duration: 0.7,
+      ease: EASE_T,
+      delay: i * 0.1
     }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, c.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-white font-body font-medium mt-3 leading-snug break-all"
+  }, c.title), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-white/60 font-body font-light mt-1"
+  }, c.sub)))))));
+}
 
-    /* ===================== Skills ===================== */
-    const SKILLS = ['AI Design', 'Brand Strategy', 'Data Analysis', 'Python', 'Claude', 'Figma'];
-    function Skills() {
-      return (
-        <section id="skills" className="relative w-full bg-transparent px-8 md:px-16 lg:px-20 py-24 md:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none" />
-          <div className="max-w-4xl mx-auto text-center relative z-10">
-            <motion.div
-              initial={REDUCE ? false : fadeUpInitial}
-              whileInView={fadeUpTarget}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.8, ease: EASE_T }}
-            >
-              <p className="text-sm font-body text-white/70 mb-4">// Skills</p>
-              <h2 className="font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-2px]">技能</h2>
-              <div className="liquid-glass rounded-full px-4 py-2 text-xs font-medium text-white inline-block mt-6">跨学科能力栈</div>
-            </motion.div>
-
-            <FadeUp delay={0.15} className="mt-10 flex flex-wrap justify-center gap-3">
-              {SKILLS.map((s, i) => (
-                <span key={i} className="skill-pill rounded-full px-4 py-2 text-sm font-body whitespace-nowrap">{s}</span>
-              ))}
-            </FadeUp>
-          </div>
-        </section>
-      );
+/* ===================== Works ===================== */
+const WORKS = [{
+  zh: 'AI 数据分析助手',
+  en: 'AI Data Analysis Assistant — Interpretable Statistical Modeling',
+  tags: ['FastAPI', 'Next.js', 'Pandas', 'OpenAI', 'Docker'],
+  grad: 'linear-gradient(135deg, rgba(100,160,120,0.30), rgba(60,100,140,0.08))',
+  href: 'https://github.com/wuf54265-boop/ai-data-analysis-assistant',
+  demo: 'https://ai-data-analysis-assistant-chi.vercel.app',
+  flag: '旗舰项目'
+}, {
+  zh: 'AI 论文研究助手',
+  en: 'AI Paper Research Assistant — LLM-Powered Academic Writing',
+  tags: ['LLM', 'DeepSeek', 'OpenAI', 'KaTeX', '单文件应用'],
+  grad: 'linear-gradient(135deg, rgba(90,140,180,0.30), rgba(55,90,140,0.07))',
+  href: 'https://github.com/wuf54265-boop/AI-Paper-Research-Assistant',
+  demo: 'https://wuf54265-boop.github.io/AI-Paper-Research-Assistant/',
+  flag: '旗舰项目'
+}, {
+  zh: '小厨房 · 微信小程序',
+  en: 'Little Kitchen — Recipe WeChat Mini Program, 100 dishes & mock ordering',
+  tags: ['微信小程序', 'JavaScript', '本地 Storage', 'Emoji 设计'],
+  grad: 'linear-gradient(135deg, rgba(220,140,70,0.30), rgba(150,90,50,0.06))',
+  href: 'https://github.com/wuf54265-boop/ikun-little-kitchen',
+  flag: '微信小程序'
+}, {
+  zh: 'AI内容工作流系统',
+  en: 'AI Content Workflow System',
+  tags: ['Claude', 'ChatGPT', 'Prompt Design'],
+  grad: 'linear-gradient(135deg, rgba(123,160,75,0.24), rgba(150,130,80,0.06))'
+}, {
+  zh: '项目尽调报告可视化',
+  en: 'Due Diligence Report Design',
+  tags: ['Information Design', 'Excel', 'Data Viz'],
+  grad: 'linear-gradient(135deg, rgba(140,120,70,0.24), rgba(123,160,75,0.05))'
+}, {
+  zh: '财务数据仪表板',
+  en: 'Financial Data Dashboard',
+  tags: ['Dashboard', 'UX', 'Data'],
+  grad: 'linear-gradient(135deg, rgba(110,140,80,0.26), rgba(120,110,70,0.06))'
+}];
+function Works() {
+  return /*#__PURE__*/React.createElement("section", {
+    id: "works",
+    className: "relative w-full bg-black px-8 md:px-16 lg:px-20 py-24 md:py-32",
+    style: {
+      background: 'radial-gradient(circle at 50% 0%, rgba(123,160,75,0.08), transparent 60%)'
     }
-
-    /* ===================== Contact ===================== */
-    function Contact() {
-      return (
-        <section id="contact" className="relative w-full bg-transparent px-8 md:px-16 lg:px-20 py-24 md:py-32" style={{ background: 'radial-gradient(circle at 50% 100%, rgba(123,160,75,0.10), transparent 60%)' }}>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none" />
-          <div className="max-w-4xl mx-auto text-center relative z-10">
-            <motion.div
-              initial={REDUCE ? false : fadeUpInitial}
-              whileInView={fadeUpTarget}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.8, ease: EASE_T }}
-            >
-              <p className="text-sm font-body text-white/70 mb-4">// Contact</p>
-              <h2 className="font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-2px]">联系我</h2>
-              <p className="text-base md:text-lg text-white/90 font-body font-light mt-6">期待与你交流</p>
-            </motion.div>
-
-            <FadeUp delay={0.15} className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-6">
-              <a href="mailto:wuboya0521@foxmail.com" className="liquid-glass-strong rounded-full px-6 py-3 text-lg md:text-xl font-heading italic text-white hover:bg-white hover:text-black transition-colors">wuboya0521@foxmail.com</a>
-              <a href="tel:15871864654" className="liquid-glass rounded-full px-6 py-3 text-lg md:text-xl font-heading italic text-white hover:bg-white hover:text-black transition-colors">15871864654</a>
-            </FadeUp>
-          </div>
-        </section>
-      );
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-6xl mx-auto"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "text-center mb-14",
+    initial: REDUCE ? false : IS_MOBILE ? fadeUpInitialMobile : fadeUpInitial,
+    whileInView: fadeUpTarget,
+    viewport: {
+      once: true,
+      amount: 0.4
+    },
+    transition: {
+      duration: 0.8,
+      ease: EASE_T
     }
-
-    /* ===================== Footer ===================== */
-    function Footer() {
-      return (
-        <footer className="relative w-full bg-black px-8 md:px-16 lg:px-20 py-10 border-t border-white/10">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="text-sm font-body text-white/70">© 2026 BOYA · 博雅设计</span>
-            <div className="flex items-center gap-6 text-sm font-body text-white/70">
-              <span className="hover:text-white transition-colors cursor-default">微信</span>
-              <span className="hover:text-white transition-colors cursor-default">小红书</span>
-              <span className="hover:text-white transition-colors cursor-default">站酷</span>
-            </div>
-          </div>
-        </footer>
-      );
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-body text-white/70 mb-4"
+  }, "// Works"), /*#__PURE__*/React.createElement("h2", {
+    className: "font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-2px]"
+  }, "精选作品")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+  }, WORKS.map((w, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: i,
+    initial: REDUCE ? false : IS_MOBILE ? fadeUpInitialMobile : fadeUpInitial,
+    whileInView: fadeUpTarget,
+    viewport: {
+      once: true,
+      amount: 0.2
+    },
+    transition: {
+      duration: 0.7,
+      ease: EASE_T,
+      delay: i % 3 * 0.1
     }
-
-    /* ===================== App ===================== */
-    function App() {
-      return (
-        <main className="bg-black">
-          <Navbar />
-          <Hero />
-          <About />
-          <Works />
-          <Skills />
-          <Contact />
-          <Footer />
-        </main>
-      );
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `work-card liquid-glass rounded-[1.25rem] p-6 ${w.demo && w.href ? 'pb-16' : ''} min-h-[320px] flex flex-col cursor-pointer relative group`,
+    style: {
+      background: w.grad
     }
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-heading italic text-white text-2xl md:text-3xl tracking-[-1px] leading-tight"
+  }, w.zh), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-white/70 font-body font-light mt-2"
+  }, w.en), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "mt-6 flex flex-wrap gap-1.5"
+  }, w.tags.map((t, j) => /*#__PURE__*/React.createElement("span", {
+    key: j,
+    className: "liquid-glass rounded-full px-3 py-1 text-[11px] text-white/90 font-body whitespace-nowrap"
+  }, t))), w.demo ? /*#__PURE__*/React.createElement("a", {
+    href: w.demo,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    "aria-label": `试用 ${w.zh}`,
+    className: "absolute inset-0 z-10"
+  }) : w.href ? /*#__PURE__*/React.createElement("a", {
+    href: w.href,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    "aria-label": w.zh,
+    className: "absolute inset-0 z-10"
+  }) : /*#__PURE__*/React.createElement("a", {
+    href: "#",
+    "aria-label": w.zh,
+    onClick: e => e.preventDefault(),
+    className: "absolute inset-0 z-10"
+  }), w.flag ? /*#__PURE__*/React.createElement("span", {
+    className: "absolute top-4 right-4 z-20 liquid-glass rounded-full px-2.5 py-1 text-[10px] font-body text-white whitespace-nowrap"
+  }, w.flag) : /*#__PURE__*/React.createElement("span", {
+    className: "absolute top-4 right-4 z-20 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+  }, /*#__PURE__*/React.createElement(ArrowUpRight, {
+    className: "h-5 w-5"
+  })), w.demo && w.href ? /*#__PURE__*/React.createElement("a", {
+    href: w.href,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    "aria-label": `${w.zh} 源码`,
+    className: "absolute bottom-4 left-4 z-30 liquid-glass rounded-full px-3 py-1 text-[10px] font-body text-white/90 hover:text-white transition-colors flex items-center gap-1 pointer-events-auto"
+  }, /*#__PURE__*/React.createElement(ArrowUpRight, {
+    className: "h-3.5 w-3.5"
+  }), " 源码") : null))))));
+}
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+/* ===================== Skills ===================== */
+const SKILLS = ['AI Design', 'Brand Strategy', 'Data Analysis', 'Python', 'Claude', 'Figma'];
+function Skills() {
+  return /*#__PURE__*/React.createElement("section", {
+    id: "skills",
+    className: "relative w-full bg-transparent px-8 md:px-16 lg:px-20 py-24 md:py-32"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "max-w-4xl mx-auto text-center relative z-10"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: REDUCE ? false : IS_MOBILE ? fadeUpInitialMobile : fadeUpInitial,
+    whileInView: fadeUpTarget,
+    viewport: {
+      once: true,
+      amount: 0.4
+    },
+    transition: {
+      duration: 0.8,
+      ease: EASE_T
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-body text-white/70 mb-4"
+  }, "// Skills"), /*#__PURE__*/React.createElement("h2", {
+    className: "font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-2px]"
+  }, "技能"), /*#__PURE__*/React.createElement("div", {
+    className: "liquid-glass rounded-full px-4 py-2 text-xs font-medium text-white inline-block mt-6"
+  }, "跨学科能力栈")), /*#__PURE__*/React.createElement(FadeUp, {
+    delay: 0.15,
+    className: "mt-10 flex flex-wrap justify-center gap-3"
+  }, SKILLS.map((s, i) => /*#__PURE__*/React.createElement("span", {
+    key: i,
+    className: "skill-pill rounded-full px-4 py-2 text-sm font-body whitespace-nowrap"
+  }, s)))));
+}
+
+/* ===================== Contact ===================== */
+function Contact() {
+  return /*#__PURE__*/React.createElement("section", {
+    id: "contact",
+    className: "relative w-full bg-transparent px-8 md:px-16 lg:px-20 py-24 md:py-32",
+    style: {
+      background: 'radial-gradient(circle at 50% 100%, rgba(123,160,75,0.10), transparent 60%)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "max-w-4xl mx-auto text-center relative z-10"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: REDUCE ? false : IS_MOBILE ? fadeUpInitialMobile : fadeUpInitial,
+    whileInView: fadeUpTarget,
+    viewport: {
+      once: true,
+      amount: 0.4
+    },
+    transition: {
+      duration: 0.8,
+      ease: EASE_T
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-body text-white/70 mb-4"
+  }, "// Contact"), /*#__PURE__*/React.createElement("h2", {
+    className: "font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-2px]"
+  }, "联系我"), /*#__PURE__*/React.createElement("p", {
+    className: "text-base md:text-lg text-white/90 font-body font-light mt-6"
+  }, "期待与你交流")), /*#__PURE__*/React.createElement(FadeUp, {
+    delay: 0.15,
+    className: "mt-10 flex flex-col sm:flex-row items-center justify-center gap-6"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "mailto:wuboya0521@foxmail.com",
+    className: "liquid-glass-strong rounded-full px-6 py-3 text-lg md:text-xl font-heading italic text-white hover:bg-white hover:text-black transition-colors"
+  }, "wuboya0521@foxmail.com"), /*#__PURE__*/React.createElement("a", {
+    href: "tel:15871864654",
+    className: "liquid-glass rounded-full px-6 py-3 text-lg md:text-xl font-heading italic text-white hover:bg-white hover:text-black transition-colors"
+  }, "15871864654"))));
+}
+
+/* ===================== Footer ===================== */
+function Footer() {
+  return /*#__PURE__*/React.createElement("footer", {
+    className: "relative w-full bg-black px-8 md:px-16 lg:px-20 py-10 border-t border-white/10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-body text-white/70"
+  }, "© 2026 BOYA · 博雅设计"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-6 text-sm font-body text-white/70"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "hover:text-white transition-colors cursor-default"
+  }, "微信"), /*#__PURE__*/React.createElement("span", {
+    className: "hover:text-white transition-colors cursor-default"
+  }, "小红书"), /*#__PURE__*/React.createElement("span", {
+    className: "hover:text-white transition-colors cursor-default"
+  }, "站酷"))));
+}
+
+/* ===================== App ===================== */
+function App() {
+  return /*#__PURE__*/React.createElement("main", {
+    className: "bg-black"
+  }, /*#__PURE__*/React.createElement(Navbar, null), /*#__PURE__*/React.createElement(Hero, null), /*#__PURE__*/React.createElement(About, null), /*#__PURE__*/React.createElement(Works, null), /*#__PURE__*/React.createElement(Skills, null), /*#__PURE__*/React.createElement(Contact, null), /*#__PURE__*/React.createElement(Footer, null));
+}
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(App, null));
+  </script>
+  <script>
+    setTimeout(function () {
+      var l = document.getElementById('loader');
+      if (l && l.parentNode) {
+        l.innerHTML = '<div style="color:#fff;font-family:system-ui,-apple-system,sans-serif;font-size:14px;text-align:center;padding:0 24px;line-height:1.6;">加载较慢，请刷新重试</div>';
+      }
+    }, 8000);
   </script>
 </body>
 </html>
